@@ -1,20 +1,19 @@
 from Tokenizer import *
 from Document import *
+from Index import *
 
 class Collection:
     def __init__(self, file_path):
         self.file_path = file_path
         self.documents = []
         self.tokenizer = Tokenizer()
-        self.index = {}
+        self.index = PositionalIndex()
         self.dictionary = {}
 
     def update_index(self, doc_id, abstract):
-        for term in abstract:
-            if term in self.index:
-                self.index[term].add(doc_id)
-            else:
-                self.index[term] = {doc_id}
+        for i in range(len(abstract)):
+            term = abstract[i]
+            self.index.add_position_to_term(term, doc_id, i)
 
     def update_dictionary(self, abstract):
         for term in abstract:
@@ -61,3 +60,6 @@ class Collection:
                 i += 1
 
             print("Dokumente eingelesen:", len(self.documents))
+
+    def get_document_count(self):
+        return len(self.documents)

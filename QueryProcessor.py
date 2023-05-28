@@ -1,11 +1,15 @@
+import random
 from Tokenizer import *
+from Merger import *
 
 
 class QueryProcessor:
 
-    def __init__(self, index):
+    def __init__(self, index, document_count):
         self.index = index
         self.tokenizer = Tokenizer()  # Tokenizerobjekt zum Aufteilen von Text in Wörter
+        self.merger = Merger(index)
+        self.document_count = document_count
 
     def tokenize(self, text):
         """
@@ -61,39 +65,45 @@ class QueryProcessor:
         return word
 
     # Verarbeitet eine boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
+    # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
     def process_query(self, query):
-        query_tokens = self.tokenize(query)
-        results = set(self._get_posting_ids(query_tokens[0]))
+        query_tokens = self.tokenizer.tokenizeQuery(query)
+        #results = set(self._get_posting_ids(query_tokens[0]))
         #print(results)
+        #results = self.merger.phrase_query(query_tokens[0])
+        index_lists = {}
+        for query_part in query_tokens:
+            for i in range(len(query_part)):
+                r = re.compile(r'\\[0-9]+')
+                filtered_part = list(filter(r.match, query_part[i]))
+                if type(query_part[i]) is list and len(filtered_part) > 0:
+                    result = self.merger.positional_intersect(query_part[i][0], query_part[i][2], 3)
+                    id = "#&" + str(random.random())
+                    index_lists[id] = result
+                    query_part[i] = id
+                elif type(query_part[i]) is list and len(query_part[i]) > 1:
+                    result = self.merger.phrase_query(query_part[i])
+                    id = "#&" + str(random.random())
+                    index_lists[id] = result
+                    query_part[i] = id
 
-        for i in range(1, len(query_tokens), 2):
-            operator = query_tokens[i]
-            #print("Operator: ", operator)
-            operand = query_tokens[i + 1]
-            #print("Operand: ", operand)
+        for query_part in query_tokens:
+            while "NOT" in query_part:
+                not_pos = query_part.indx("NOT")
+                if type(query_part[not_pos + 1]) is list:
+                    position_list = self.index.get_document_list(query_part[not_pos + 1][0])
+                else:
+                    position_list = index_lists[query_part[not_pos + 1]]
+                result = self.merger.not_merge(position_list, self.document_count)
+                id = "#&" + str(random.random())
+                index_lists[id] = result
+                query_part[i] = id #anstatt query_part in der for Schleife muss durch query_tokens mit einem integer iteriert werden
 
-            if operator == 'AND':
-                if '"' in operand or '/' in operand:
-                    results &= self._process_complex_query(operand)
-                # Ausnahmebehandlung für NOT nach AND --- HACK --- BÖSE --- SOLLTE DEFINITIV ANDERS GEMACHT WERDEN !!!
-                elif operand == 'NOT':
-                    results -= set(self._get_posting_ids(query_tokens[i + 2]))
-                    # print(results)
-                    break
-                else:
-                    results &= set(self._get_posting_ids(operand))
-            elif operator == 'OR':
-                if '"' in operand or '/' in operand:
-                    results |= self._process_complex_query(operand)
-                else:
-                    results |= set(self._get_posting_ids(operand))
-            elif operator == 'NOT':
-                if '"' in operand or '/' in operand:
-                    results -= self._process_complex_query(operand)
-                else:
-                    results -= set(self._get_posting_ids(operand))
 
-        return results
+
+        print("test")
+
+        #return results
 
     # Parst die boolesche Anfrage in Normalform und gibt die Liste der Tokens zurück
     def _parse_query(self, query):
@@ -105,7 +115,7 @@ class QueryProcessor:
     # Gibt die Liste der Dokument-IDs zurück, die mit dem angegebenen Begriff verknüpft sind
     def _get_posting_ids(self, term):
         if term in self.index:
-            return self.index[term]
+            return self.index[term].get_document_list()
         else:
             return []
 

@@ -19,11 +19,11 @@ def print_docs(documents):
 def print_index(index):
     print("\nDie ersten 3 Indices\n")
     count = 0
-    for term, docs in index.items():
+    for term, indexes in index.index.items():
         if count >= 3:
             break
         print("Term:", term)
-        print("Documents:", docs)
+        print("Documents:", indexes.get_document_list())
         print("-----------------------")
         count += 1
 
@@ -51,7 +51,7 @@ def main():
     print_index(collection.index)
     print_dictionary(collection.dictionary)
     # Initialisierung des Suchanfragenverarbeiters
-    query_processor = QueryProcessor(collection.index)
+    query_processor = QueryProcessor(collection.index, collection.get_document_count())
 
     # Loop für die Verarbeitung von Suchanfragen
     # Output muss geflushed werden, da die Reihenfolge der Prints sonst nicht deterministisch ist

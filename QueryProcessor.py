@@ -13,59 +13,6 @@ class QueryProcessor:
         self.merger = Merger(index)
         self.document_count = document_count
 
-    def tokenize(self, text):
-        """
-        Teilt eine Suchanfrage in Wörter auf.
-        text: Die Suchanfrage als Text.
-        """
-        return self.tokenizer.tokenize(text)
-
-    def levenshtein_distance(self, word1, word2):
-        """
-        Berechnet die Levenshtein-Distanz zwischen zwei Wörtern.
-        word1: Das erste Wort.
-        word2: Das zweite Wort.
-        """
-        if len(word1) < len(word2):
-            return self.levenshtein_distance(word2, word1)
-
-        if len(word2) == 0:
-            return len(word1)
-
-        previous_row = range(len(word2) + 1)
-        for i, char1 in enumerate(word1):
-            current_row = [i + 1]
-            for j, char2 in enumerate(word2):
-                insertions = previous_row[j + 1] + 1
-                deletions = current_row[j] + 1
-                substitutions = previous_row[j] + (char1 != char2)
-                current_row.append(min(insertions, deletions, substitutions))
-            previous_row = current_row
-
-        return previous_row[-1]  # Der letzte Wert in der letzten Zeile ist die Levenshtein-Distanz
-
-    def correct_spelling(self, word, k, r, J):
-        """
-        Korrigiert die Rechtschreibung eines Worts basierend auf dem Index.
-        word: Das zu korrigierende Wort.
-        k: Die Länge der K-Gramme für die Suche im Index.
-        r: Die minimale Anzahl von Dokumenten, in denen das Wort vorkommen muss, um als korrekt zu gelten.
-        J: Der Schwellenwert für die Jaccard-Ähnlichkeit zwischen K-Grammen, um Kandidaten zu ermitteln.
-        """
-        if len([doc_id for doc_id, tokens in self.index.documents.items() if word in tokens]) >= r:
-            return word
-
-        kgrams_word = set(word[i:i + k] for i in range(len(word) - k + 1))
-        candidates = {token for kgram in kgrams_word for token in self.index.kgram_index.get(kgram, [])}
-        candidates = {candidate for candidate in candidates if self.index.jaccard_similarity(kgrams_word, set(
-            candidate[i:i + k] for i in range(len(candidate) - k + 1))) >= J}
-        candidates = sorted(candidates, key=lambda candidate: self.levenshtein_distance(word, candidate))
-
-        if candidates:
-            return candidates[0]
-
-        return word
-
     # Verarbeitet eine boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
     # (NOT the OR NOT a \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND the

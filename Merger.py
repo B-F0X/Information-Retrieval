@@ -5,9 +5,8 @@ class Merger:
     def __init__(self, index):
         self.index = index
 
+    # Standard AND merger
     def and_merge(self, posting_list1, posting_list2):
-        #posting_list1 = self.index.get_document_list(term1)
-        #posting_list2 = self.index.get_document_list(term2)
         answer = []
         i = 0
         j = 0
@@ -22,9 +21,8 @@ class Merger:
                 j += 1
         return answer
 
+    # AND merger with skip-gram indexes
     def and_merge_fast(self, posting_list1, posting_list2):
-        #posting_list1 = self.index.get_document_list(term1)
-        #posting_list2 = self.index.get_document_list(term2)
         answer = []
         i = 0
         j = 0
@@ -47,9 +45,8 @@ class Merger:
                     j += 1
         return answer
 
+    # OR merger
     def or_merge(self, posting_list1, posting_list2):
-        #posting_list1 = self.index.get_document_list(term1)
-        #posting_list2 = self.index.get_document_list(term2)
         answer = []
         i = 0
         j = 0
@@ -70,8 +67,8 @@ class Merger:
             answer.extend(posting_list1[i:])
         return answer
 
+    # NOT merger
     def not_merge(self, posting_list1, document_count):
-        #posting_list1 = self.index.get_document_list(term1)
         answer = []
         i = 0
         j = 1
@@ -84,6 +81,7 @@ class Merger:
                 j += 1
         return answer
 
+    # Positional intersect algorithm to process proximity queries
     def positional_intersect(self, term1, term2, k):
         answer = []
         posting_list1 = self.index.get_document_list(term1)
@@ -118,6 +116,7 @@ class Merger:
                 j += 1
         return answer
 
+    # Method to process phrase queries
     def phrase_query(self, phrase):
         answer = []
         documents_with_all_terms = self.index.get_document_list(phrase[0])

@@ -70,17 +70,16 @@ class QueryProcessor:
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
     # (NOT the OR NOT a \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND the
     def process_query(self, query):
+        # tokenize the query
         query_tokens = self.tokenizer.tokenizeQuery(query)
-        #results = set(self._get_posting_ids(query_tokens[0]))
-        #print(results)
-        #results = self.merger.phrase_query(query_tokens[0])
         index_lists = {}
+        # resolve the proximity and phrase queries
         for query_part in query_tokens:
             for i in range(len(query_part)):
                 r = re.compile(r'\\[0-9]+')
                 filtered_part = list(filter(r.match, query_part[i]))
                 if type(query_part[i]) is list and len(filtered_part) > 0:
-                    result = self.merger.positional_intersect(query_part[i][0], query_part[i][2], 3)
+                    result = self.merger.positional_intersect(query_part[i][0], query_part[i][2], int(query_part[i][1].replace("\\", "")))
                     result_id = "#&" + str(random.random())
                     index_lists[result_id] = result
                     query_part[i] = result_id
@@ -90,6 +89,9 @@ class QueryProcessor:
                     index_lists[result_id] = result
                     query_part[i] = result_id
 
+        # Resolve first the NOT and then the OR expressions in each query part.
+        # If there are still terms in the query part after that,
+        # then put the according index list in the index_lists array and put a reference in the query_tokens array
         for i in range(len(query_tokens)):
             query_part = query_tokens[i]
             while "NOT" in query_part:
@@ -129,6 +131,7 @@ class QueryProcessor:
                 index_lists[result_id] = result
                 query_tokens[i][0] = result_id
 
+        # Sort the remaining index_lists references in the query_tokens by their index list size
         sorted_query = []
         copied_query_tokens = copy.deepcopy(query_tokens)
         while len(copied_query_tokens) > 0:
@@ -144,6 +147,7 @@ class QueryProcessor:
             sorted_query.append(copied_query_tokens[shortest_index][0])
             copied_query_tokens.pop(shortest_index)
 
+        # AND-Merge the index lists starting with the smallest
         while len(sorted_query) != 1:
             result = self.merger.and_merge_fast(index_lists[sorted_query[0]], index_lists[sorted_query[1]])
             result_id = "#&" + str(random.random())
@@ -152,39 +156,3 @@ class QueryProcessor:
             sorted_query.pop(1)
 
         return index_lists[sorted_query[0]]
-
-    # Parst die boolesche Anfrage in Normalform und gibt die Liste der Tokens zurück
-    def _parse_query(self, query):
-        query = query.replace('(', ' ( ')
-        query = query.replace(')', ' ) ')
-        query_tokens = query.split()
-        return query_tokens
-
-    # Gibt die Liste der Dokument-IDs zurück, die mit dem angegebenen Begriff verknüpft sind
-    def _get_posting_ids(self, term):
-        if term in self.index:
-            return self.index[term].get_document_list()
-        else:
-            return []
-
-    # Verarbeitet eine komplexe boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
-    def _process_complex_query(self, query):
-        query_tokens = self._parse_query(query)
-        results = set(self._get_posting_ids(query_tokens[0]))
-        start_index = 1
-        step_size = 2
-
-        for i in range(start_index, len(query_tokens), step_size):
-            operator = query_tokens[i]
-            #print("C-Operator: ", operator)
-            operand = query_tokens[i + 1]
-            #print("C-Operand: ", operand)
-
-            if operator == 'AND':
-                results &= set(self._get_posting_ids(operand))
-            elif operator == 'OR':
-                results |= set(self._get_posting_ids(operand))
-            elif operator == 'NOT':
-                results -= set(self._get_posting_ids(operand))
-
-        return results

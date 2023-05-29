@@ -1,3 +1,4 @@
+# Class to safe the term frequency and the positions of the term in the document
 class TermDocumentIndex:
     def __init__(self, first_position):
         self.termFrequency = 1
@@ -8,6 +9,7 @@ class TermDocumentIndex:
         self.positions.append(position)
 
 
+# Class to safe a token, the Documents it is in and the document frequency
 class Index:
     def __init__(self, token, first_document, first_position):
         self.token = token
@@ -31,6 +33,7 @@ class Index:
             return []
 
 
+# Class to safe the Indexes of all terms
 class PositionalIndex:
     def __init__(self):
         self.index = {}

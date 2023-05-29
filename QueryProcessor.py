@@ -70,7 +70,25 @@ class QueryProcessor:
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
     # (NOT the OR NOT a \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND the
     def process_query(self, query):
-        # tokenize the query
+        """
+        In the following the query_tokens array as well as the index_lists dictionary will be important data structures.
+        query_tokens is the array of operands which has the structure explained in the Tokenizer Class.
+        index_lists is a dictionary of the processed index lists.
+        For example, at the beginning the structures will look like this:
+        query_tokens: [['NOT', ['term1'], 'OR', ['term2', 'term3']], ['NOT', ['term4', '\\3', 'term5']]]
+        index_lists: {}
+        After the first loop they will look like this:
+        query_tokens: [['NOT', ['term1'], 'OR', ['#&0.1']], ['NOT', ['#&0.2']]]
+        index_lists: {'#&0.1': [docID1, DocID2, ...], '#&0.2': [docID1, DocID2, ...]}
+        After the second loop they will look like this:
+        query_tokens: [['#&0.3'], ['#&0.4']]
+        index_lists: {'#&0.1': [docID1, DocID2, ...], '#&0.2': [docID1, DocID2, ...],
+                      '#&0.3': [docID1, DocID2, ...], '#&0.4': [docID3, DocID4, ...]}
+        After that the tokens in the query_tokens list will get sorted by the size of the according index list in the
+        index_lists dictionary.
+        In the last step the index lists can be AND-Merged starting with the smallest two.
+        """
+        # tokenize the query and get array of operands
         query_tokens = self.tokenizer.tokenizeQuery(query)
         index_lists = {}
         # resolve the proximity and phrase queries

@@ -115,7 +115,7 @@ class QueryProcessor:
             while "NOT" in query_part:
                 or_pos = query_part.index("NOT")
                 if type(query_part[or_pos + 1]) is list:
-                    position_list = self.index.get_document_list(query_part[or_pos + 1][0])
+                    position_list = self.index.get_document_list_spelling_correction(query_part[or_pos + 1][0])
                 else:
                     position_list = index_lists[query_part[or_pos + 1]]
                 result = self.merger.not_merge(position_list, self.document_count)
@@ -129,11 +129,11 @@ class QueryProcessor:
                 first_operand = query_part[or_pos - 1]
                 second_operand = query_part[or_pos + 1]
                 if type(first_operand) is list:
-                    position_list_first_operand = self.index.get_document_list(first_operand[0])
+                    position_list_first_operand = self.index.get_document_list_spelling_correction(first_operand[0])
                 else:
                     position_list_first_operand = index_lists[first_operand]
                 if type(second_operand) is list:
-                    position_list_second_operand = self.index.get_document_list(second_operand[0])
+                    position_list_second_operand = self.index.get_document_list_spelling_correction(second_operand[0])
                 else:
                     position_list_second_operand = index_lists[second_operand]
                 result = self.merger.or_merge(position_list_first_operand, position_list_second_operand)
@@ -144,7 +144,7 @@ class QueryProcessor:
                 query_tokens[i].pop(or_pos - 1)
 
             if not re.match(r'(#&).*', query_part[0]):
-                result = self.index.get_document_list(query_part[0])
+                result = self.index.get_document_list_spelling_correction(query_part[0])
                 result_id = "#&" + str(random.random())
                 index_lists[result_id] = result
                 query_tokens[i][0] = result_id
@@ -159,7 +159,7 @@ class QueryProcessor:
                 token = copied_query_tokens[i][0]
                 if len(index_lists[token]) < shortest:
                     if len(index_lists[token]) == 0:
-                        return []  # If one of the index_lists is [] than we can instantly return [].
+                        return []  # If one of the index_lists is [] we can instantly return [].
                     shortest = len(index_lists[token])
                     shortest_index = i
             sorted_query.append(copied_query_tokens[shortest_index][0])

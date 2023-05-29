@@ -1,35 +1,27 @@
 class KGramIndex:
-    def __init__(self):
-        self.documents = {}   # Dictionary zur Speicherung von Dokumenten
-        self.kgram_index = {} # Dictionary zur Speicherung des K-Gramm-Indexes
+    def __init__(self, k):
+        self.k_gram_index = {}
+        self.k = k
 
-    def add_document(self, doc_id, tokens):
-        """
-        Fügt ein Dokument und seine zugehörigen Tokens dem Index hinzu.
-        doc_id: Die eindeutige Kennung des Dokuments.
-        tokens: Eine Liste von Tokens, die im Dokument vorkommen.
-        """
-        self.documents[doc_id] = tokens
+    def split_to_k_grams(self, term):
+        k_grams = []
+        for i in range(len(term) - self.k + 1):
+            k_grams.append(term[i:i + self.k])
+        return k_grams
 
-    def generate_kgram_index(self, k):
-        """
-        Erstellt den K-Gramm-Index aus den Tokens der Dokumente.
-        k: Die Länge der K-Gramme, die erstellt werden sollen.
-        """
-        for doc_id, tokens in self.documents.items():
-            for token in tokens:
-                for i in range(len(token) - k + 1):
-                    kgram = token[i:i+k]
-                    if kgram not in self.kgram_index:
-                        self.kgram_index[kgram] = set()
-                    self.kgram_index[kgram].add(token)
+    def add_term(self, term):
+        k_grams = self.split_to_k_grams(term)
+        for k_gram in k_grams:
+            if k_gram in self.k_gram_index and term not in self.k_gram_index[k_gram]:
+                self.k_gram_index[k_gram].append(term)
+            elif k_gram not in self.k_gram_index:
+                self.k_gram_index[k_gram] = [term]
+        return len(k_grams)
 
-    def jaccard_similarity(self, set1, set2):
-        """
-        Berechnet die Jaccard-Ähnlichkeit zwischen zwei Mengen.
-        set1: Die erste Menge.
-        set2: Die zweite Menge.
-        """
-        intersection = set1 & set2
-        union = set1 | set2
-        return len(intersection) / len(union) if len(union) != 0 else 0
+    def get_posting_lists(self, term):
+        k_grams = self.split_to_k_grams(term)
+        result = []
+        for k_gram in k_grams:
+            if k_gram in self.k_gram_index:
+                result.append(self.k_gram_index[k_gram])
+        return result

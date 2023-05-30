@@ -1,5 +1,6 @@
 import re
 import sys
+from config import *
 
 
 class SpellingController:
@@ -34,7 +35,7 @@ class SpellingController:
                             # and move it into results if the jaccard coefficient is greater than 0.5
                             for k_term, value in k_gram_dictionary.items():
                                 jaccard = value / (amount_of_k_grams + self.positionalIndex.index[k_term].k_gram_size - value)
-                                if jaccard > 0.5:
+                                if jaccard > jaccard_threshold:
                                     results.append(k_term)
 
                             # Calculate the levenshtein distance for each term in the results array

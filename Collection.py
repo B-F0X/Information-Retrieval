@@ -2,13 +2,14 @@ from Tokenizer import *
 from Document import *
 from Index import *
 from KGramIndex import *
+from config import *
 
 class Collection:
     def __init__(self, file_path):
         self.file_path = file_path
         self.documents = {}
         self.tokenizer = Tokenizer()
-        self.k_gram_index = KGramIndex(2)
+        self.k_gram_index = KGramIndex(k_gram)
         self.index = PositionalIndex(self.k_gram_index)
         self.dictionary = {}
 

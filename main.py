@@ -1,6 +1,7 @@
 import operator
 from QueryProcessor import *
 from Collection import *
+from config import *
 
 
 def print_docs(documents):
@@ -41,7 +42,7 @@ def print_dictionary(dictionary):
 
 def main():
     # Nutzung der Collection-Klasse
-    file_path = "cisi/CISI.ALL"
+    file_path = collection_file
     collection = Collection(file_path)
     collection.open_and_read()
 

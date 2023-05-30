@@ -1,4 +1,3 @@
-import sys
 import operator
 from QueryProcessor import *
 from Collection import *
@@ -10,8 +9,8 @@ def print_docs(documents):
     for doc in documents:
         if count >= 3:
             break
-        print("ID:", doc.doc_id)
-        print("Abstract:", doc.abstract)
+        print("ID:", documents[doc].doc_id)
+        print("Abstract:", documents[doc].abstract)
         print("-----------------------")
         count += 1
 
@@ -67,4 +66,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/

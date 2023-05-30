@@ -3,6 +3,7 @@ import random
 import sys
 from Tokenizer import *
 from Merger import *
+from SpellingController import *
 
 
 class QueryProcessor:
@@ -12,6 +13,7 @@ class QueryProcessor:
         self.tokenizer = Tokenizer()  # Tokenizerobjekt zum Aufteilen von Text in Wörter
         self.merger = Merger(index)
         self.document_count = document_count
+        self.spelling_controller = SpellingController(index)
 
     # Verarbeitet eine boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
@@ -37,6 +39,7 @@ class QueryProcessor:
         """
         # tokenize the query and get array of operands
         query_tokens = self.tokenizer.tokenizeQuery(query)
+        query_tokens = self.spelling_controller.check_query(query_tokens)
         index_lists = {}
         # resolve the proximity and phrase queries
         for query_part in query_tokens:
@@ -62,7 +65,7 @@ class QueryProcessor:
             while "NOT" in query_part:
                 or_pos = query_part.index("NOT")
                 if type(query_part[or_pos + 1]) is list:
-                    position_list = self.index.get_document_list_spelling_correction(query_part[or_pos + 1][0])
+                    position_list = self.index.get_document_list(query_part[or_pos + 1][0])
                 else:
                     position_list = index_lists[query_part[or_pos + 1]]
                 result = self.merger.not_merge(position_list, self.document_count)
@@ -76,11 +79,11 @@ class QueryProcessor:
                 first_operand = query_part[or_pos - 1]
                 second_operand = query_part[or_pos + 1]
                 if type(first_operand) is list:
-                    position_list_first_operand = self.index.get_document_list_spelling_correction(first_operand[0])
+                    position_list_first_operand = self.index.get_document_list(first_operand[0])
                 else:
                     position_list_first_operand = index_lists[first_operand]
                 if type(second_operand) is list:
-                    position_list_second_operand = self.index.get_document_list_spelling_correction(second_operand[0])
+                    position_list_second_operand = self.index.get_document_list(second_operand[0])
                 else:
                     position_list_second_operand = index_lists[second_operand]
                 result = self.merger.or_merge(position_list_first_operand, position_list_second_operand)
@@ -90,8 +93,8 @@ class QueryProcessor:
                 query_tokens[i].pop(or_pos + 1)
                 query_tokens[i].pop(or_pos - 1)
 
-            if not re.match(r'(#&).*', query_part[0]):
-                result = self.index.get_document_list_spelling_correction(query_part[0])
+            if type(query_part[0]) is list:
+                result = self.index.get_document_list(query_part[0][0])
                 result_id = "#&" + str(random.random())
                 index_lists[result_id] = result
                 query_tokens[i][0] = result_id

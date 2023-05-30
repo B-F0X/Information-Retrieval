@@ -6,7 +6,7 @@ from KGramIndex import *
 class Collection:
     def __init__(self, file_path):
         self.file_path = file_path
-        self.documents = []
+        self.documents = {}
         self.tokenizer = Tokenizer()
         self.k_gram_index = KGramIndex(2)
         self.index = PositionalIndex(self.k_gram_index)
@@ -53,7 +53,7 @@ class Collection:
                     abstract = self.tokenizer.tokenize(abstract.strip())
 
                     document = Document(doc_id, abstract)
-                    self.documents.append(document)
+                    self.documents[doc_id] = document
 
                     # Index und Dictionary aktualisieren
                     self.update_index(doc_id, abstract)

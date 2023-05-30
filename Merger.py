@@ -126,11 +126,12 @@ class Merger:
             position_lists = []
             for term in phrase:
                 position_lists.append(self.index.get_positions_in_document(term, document))
-            for a in position_lists[0]:
-                if len(position_lists) == 2 and a+1 in position_lists[1]:
+            for position_of_first_word_in_document in position_lists[0]:
+                if len(phrase) == 2 and position_of_first_word_in_document+1 in position_lists[1]:
                     answer.append(document)
                     break
-                if a+1 in position_lists[1] and a+2 in position_lists[2]:
+                if position_of_first_word_in_document+1 in position_lists[1] and \
+                        position_of_first_word_in_document+2 in position_lists[2]:
                     answer.append(document)
                     break
         return answer

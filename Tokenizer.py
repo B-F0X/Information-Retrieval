@@ -66,6 +66,8 @@ class Tokenizer:
                         new_subtokens.append(connected)
                         a = b
                     subtokens = new_subtokens
+            else:
+                subtokens = [subtokens]
             tokens[i] = subtokens
         return tokens
 

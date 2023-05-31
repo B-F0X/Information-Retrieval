@@ -1,5 +1,5 @@
 import re
-import sys
+import copy
 from config import *
 
 
@@ -17,7 +17,7 @@ class SpellingController:
                     for term_number in range(len(operand)):
                         term = operand[term_number]
                         # If the term is not known, and it is not of the format \\x
-                        if term not in self.positionalIndex.index and not re.match(r'\\[0-9]+', term):
+                        if len(self.positionalIndex.get_document_list(term)) < r_index and not re.match(r'\\[0-9]+', term):
                             # Split the query term into K-Grams and get the posting list for each K-Gram
                             amount_of_k_grams = len(self.positionalIndex.k_gram_index.split_to_k_grams(term))
                             k_gram_posting_lists = self.positionalIndex.k_gram_index.get_posting_lists(term)
@@ -32,7 +32,7 @@ class SpellingController:
                                     else:
                                         k_gram_dictionary[posting] += 1
                             # Calculate the jaccard coefficient for each term in the dictionary
-                            # and move it into results if the jaccard coefficient is greater than 0.5
+                            # and move it into results if the jaccard coefficient is greater than the jaccard_threshold
                             for k_term, value in k_gram_dictionary.items():
                                 jaccard = value / (amount_of_k_grams + self.positionalIndex.index[k_term].k_gram_size - value)
                                 if jaccard > jaccard_threshold:
@@ -41,19 +41,29 @@ class SpellingController:
                             # Calculate the levenshtein distance for each term in the results array
                             # and choose the one with the smallest distance to the query string.
                             # If results is empty the wrongly spelled query term remains wrong.
-                            best_fitting_term = ""
-                            best_levenshtein_distance = sys.maxsize
+                            #best_fitting_term = ""
+                            #best_levenshtein_distance = sys.maxsize
+                            best_fitting_terms = []
                             for k_term in results:
                                 levenshtein_distance = self.levenshtein_distance(k_term, term)
-                                if levenshtein_distance < best_levenshtein_distance:
-                                    best_fitting_term = k_term
-                                    best_levenshtein_distance = levenshtein_distance
-                            if best_fitting_term != "":
-                                print("Corrected '" + term + "' to: " + best_fitting_term)
-                                query[and_operand][or_operand][term_number] = best_fitting_term
+                                i = 0
+                                while i < len(best_fitting_terms) and levenshtein_distance > best_fitting_terms[i][1]:
+                                    i += 1
+                                best_fitting_terms.insert(i, [k_term, levenshtein_distance])
+
+                            if len(best_fitting_terms) > 0:
+                                best_queries = []
+                                i = 1
+                                for best_fitting_term in best_fitting_terms[:5]:
+                                    print("{}. meinten Sie '{}' anstatt '{}'".format(i, best_fitting_term[0], term))
+                                    i += 1
+                                    copied_query = copy.deepcopy(query)
+                                    copied_query[and_operand][or_operand][term_number] = best_fitting_term[0]
+                                    best_queries.append(copied_query)
+                                return best_queries
                             else:
                                 print("Found no correction for '" + term + "'")
-        return query
+        return [query]
 
     def levenshtein_distance(self, word1, word2):
         """

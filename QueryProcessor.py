@@ -18,7 +18,7 @@ class QueryProcessor:
     # Verarbeitet eine boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
     # (NOT the OR NOT a \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND the
-    def process_query(self, query):
+    def process_query(self, query_number):
         """
         In the following the query_tokens array as well as the index_lists dictionary will be important data structures.
         query_tokens is the array of operands which has the structure explained in the Tokenizer Class.
@@ -38,8 +38,20 @@ class QueryProcessor:
         In the last step the index lists can be AND-Merged starting with the smallest two.
         """
         # tokenize the query and get array of operands
-        query_tokens = self.tokenizer.tokenizeQuery(query)
-        query_tokens = self.spelling_controller.check_query(query_tokens)
+        query_tokens = self.tokenizer.tokenizeQuery(query_number)
+        queries = self.spelling_controller.check_query(query_tokens)
+        if len(queries) > 1:
+            print("Welche Anfrage möchten Sie ausführen?")
+            query_number = -1
+            while int(query_number) < 1 or int(query_number) > len(queries):
+                sys.stdout.write('Bitte eine der Zahlen eingeben:')
+                sys.stdout.flush()
+                query_number = int(input())
+            query_tokens = queries[query_number - 1]
+        else:
+            query_tokens = queries[0]
+
+
         index_lists = {}
         # resolve the proximity and phrase queries
         for query_part in query_tokens:

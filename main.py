@@ -59,9 +59,9 @@ def main():
         sys.stdout.write('Geben Sie Ihre Suchanfrage ein: ')
         sys.stdout.flush()
         query = input()
-        result = query_processor.process_query(query)
-        print(result)
-        print('\n')
+        results = query_processor.process_query(query)
+        print(results)
+        print("\n")
 
 
 if __name__ == '__main__':

@@ -67,6 +67,62 @@ class Merger:
             answer.extend(posting_list1[i:])
         return answer
 
+        # Standard AND NOT merger
+    def and_not_merge(self, posting_list1, posting_list2):
+        answer = []
+        i = 0
+        j = 0
+        while i < len(posting_list1) and j < len(posting_list2):
+            if posting_list1[i] == posting_list2[j]:
+                i += 1
+                j += 1
+            elif posting_list1[i] > posting_list2[j]:
+                j += 1
+            else:
+                answer.append(posting_list1[i])
+                i += 1
+        if j == len(posting_list2):
+            answer.extend(posting_list1[i:])
+        return answer
+
+    def or_not_merge(self, posting_list1, posting_list2, document_count):
+        answer = []
+        i = 0
+        j = 0
+        if len(posting_list1) > 0 and len(posting_list2) > 0 and posting_list1[0] <= posting_list2[0]:
+            doc_id = 1
+            while doc_id < posting_list2[0]:
+                answer.append(doc_id)
+                doc_id += 1
+        while i < len(posting_list1) and j < len(posting_list2):
+            if posting_list1[i] == posting_list2[j]:
+                answer.append(posting_list1[i])
+                i += 1
+                j += 1
+            elif posting_list1[i] < posting_list2[j]:
+                i += 1
+            else:
+                doc_id = posting_list2[j] + 1
+                j += 1
+                while j < len(posting_list2) and doc_id < posting_list2[j]:
+                    answer.append(doc_id)
+                    doc_id += 1
+
+        if i == len(posting_list1):
+            # Add all doc_ids after posting_list2[j] except the ones that are in posting_list2
+            doc_id = posting_list2[j] + 1
+            while doc_id <= document_count:
+                if doc_id not in posting_list2:
+                    answer.append(doc_id)
+                doc_id += 1
+        elif j == len(posting_list2):
+            # Add all doc_ids after posting_list2[j]
+            doc_id = posting_list2[j-1] + 1
+            while doc_id <= document_count:
+                answer.append(doc_id)
+                doc_id += 1
+        return answer
+
     # NOT merger
     def not_merge(self, posting_list1, document_count):
         answer = []

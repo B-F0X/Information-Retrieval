@@ -53,8 +53,19 @@ class Tokenizer:
                     new_subtokens = []
                     while a < len(subtokens):
                         while subtokens[a] == "NOT" or subtokens[a] == "OR":
-                            new_subtokens.append(subtokens[a])
-                            a += 1
+                            if subtokens[a + 1] == "NOT":
+                                new_subtokens.append("OR_NOT")
+                                a += 2
+                            elif subtokens[a] == "NOT" and "OR" not in subtokens:
+                                new_subtokens.append("AND_NOT")
+                                a += 1
+                            elif subtokens[a] == "NOT" and len(subtokens) > 2:
+                                new_subtokens.append("LEADING_NOT")
+                                a += 1
+                            else:
+                                new_subtokens.append(subtokens[a])
+                                a += 1
+
                         b = a
                         while b < len(subtokens) and subtokens[b] != "NOT" and subtokens[b] != "OR":
                             b += 1

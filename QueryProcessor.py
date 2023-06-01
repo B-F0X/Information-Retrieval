@@ -17,7 +17,7 @@ class QueryProcessor:
 
     # Verarbeitet eine boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
-    # (NOT the OR NOT a \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND the
+    # (NOT the OR NOT an \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND NOT the
     def process_query(self, query_number):
         """
         In the following the query_tokens array as well as the index_lists dictionary will be important data structures.
@@ -74,17 +74,17 @@ class QueryProcessor:
         # then put the according index list in the index_lists array and put a reference in the query_tokens array
         for i in range(len(query_tokens)):
             query_part = query_tokens[i]
-            while "NOT" in query_part:
-                or_pos = query_part.index("NOT")
-                if type(query_part[or_pos + 1]) is list:
-                    position_list = self.index.get_document_list(query_part[or_pos + 1][0])
+            while "LEADING_NOT" in query_part:
+                not_pos = query_part.index("LEADING_NOT")
+                if type(query_part[not_pos + 1]) is list:
+                    position_list = self.index.get_document_list(query_part[not_pos + 1][0])
                 else:
-                    position_list = index_lists[query_part[or_pos + 1]]
+                    position_list = index_lists[query_part[not_pos + 1]]
                 result = self.merger.not_merge(position_list, self.document_count)
                 result_id = "#&" + str(random.random())
                 index_lists[result_id] = result
-                query_tokens[i][or_pos] = result_id
-                query_tokens[i].pop(or_pos + 1)
+                query_tokens[i][not_pos] = result_id
+                query_tokens[i].pop(not_pos + 1)
 
             while "OR" in query_part:
                 or_pos = query_part.index("OR")
@@ -105,11 +105,36 @@ class QueryProcessor:
                 query_tokens[i].pop(or_pos + 1)
                 query_tokens[i].pop(or_pos - 1)
 
+            while "OR_NOT" in query_part:
+                or_not_pos = query_part.index("OR_NOT")
+                first_operand = query_part[or_not_pos - 1]
+                second_operand = query_part[or_not_pos + 1]
+                if type(first_operand) is list:
+                    position_list_first_operand = self.index.get_document_list(first_operand[0])
+                else:
+                    position_list_first_operand = index_lists[first_operand]
+                if type(second_operand) is list:
+                    position_list_second_operand = self.index.get_document_list(second_operand[0])
+                else:
+                    position_list_second_operand = index_lists[second_operand]
+                result = self.merger.or_not_merge(position_list_first_operand, position_list_second_operand, self.document_count)
+                result_id = "#&" + str(random.random())
+                index_lists[result_id] = result
+                query_tokens[i][or_not_pos] = result_id
+                query_tokens[i].pop(or_not_pos + 1)
+                query_tokens[i].pop(or_not_pos - 1)
+
             if type(query_part[0]) is list:
                 result = self.index.get_document_list(query_part[0][0])
                 result_id = "#&" + str(random.random())
                 index_lists[result_id] = result
                 query_tokens[i][0] = result_id
+
+            if query_part[0] == "AND_NOT" and type(query_part[1]) is list:
+                result = self.index.get_document_list(query_part[1][0])
+                result_id = "#&" + str(random.random())
+                index_lists[result_id] = result
+                query_tokens[i][1] = result_id
 
         # Sort the remaining index_lists references in the query_tokens by their index list size
         sorted_query = []
@@ -118,21 +143,34 @@ class QueryProcessor:
             shortest = sys.maxsize
             shortest_index = 0
             for i in range(len(copied_query_tokens)):
-                token = copied_query_tokens[i][0]
-                if len(index_lists[token]) < shortest:
-                    if len(index_lists[token]) == 0:
-                        return []  # If one of the index_lists is [] we can instantly return [].
-                    shortest = len(index_lists[token])
+                if len(copied_query_tokens[i]) == 2:
+                    list_size = self.document_count - len(index_lists[copied_query_tokens[i][1]])
+                else:
+                    list_size = len(index_lists[copied_query_tokens[i][0]])
+                if list_size < shortest:
+                    shortest = list_size
                     shortest_index = i
-            sorted_query.append(copied_query_tokens[shortest_index][0])
+            sorted_query.append(copied_query_tokens[shortest_index])
             copied_query_tokens.pop(shortest_index)
 
         # AND-Merge the index lists starting with the smallest
         while len(sorted_query) != 1:
-            result = self.merger.and_merge_fast(index_lists[sorted_query[0]], index_lists[sorted_query[1]])
+            if "AND_NOT" in sorted_query[0] and "AND_NOT" in sorted_query[1]:
+                result = self.merger.and_not_merge(
+                    self.merger.not_merge(index_lists[sorted_query[0][1]], self.document_count),
+                    index_lists[sorted_query[1][1]])
+            elif "AND_NOT" in sorted_query[0]:
+                result = self.merger.and_not_merge(index_lists[sorted_query[1][0]], index_lists[sorted_query[0][1]])
+            elif "AND_NOT" in sorted_query[1]:
+                result = self.merger.and_not_merge(index_lists[sorted_query[0][0]], index_lists[sorted_query[1][1]])
+            else:
+                result = self.merger.and_merge(index_lists[sorted_query[0][0]], index_lists[sorted_query[1][0]])
             result_id = "#&" + str(random.random())
             index_lists[result_id] = result
-            sorted_query[0] = result_id
+            sorted_query[0] = [result_id]
             sorted_query.pop(1)
 
-        return index_lists[sorted_query[0]]
+        if len(sorted_query[0]) != 1:
+            return self.merger.not_merge(index_lists[sorted_query[0][1]], self.document_count)
+
+        return index_lists[sorted_query[0][0]]

@@ -23,12 +23,12 @@ class Tokenizer:
         Output array:
         1st 2nd 3rd dimension
         [
-            ['NOT',
+            ['LEADING_NOT',
                 ['term1', 'term2'],
             'OR',
                 ['term3']
             ],
-            ['NOT',
+            ['AND_NOT',
                 ['term4']
             ],
             [

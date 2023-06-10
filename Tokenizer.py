@@ -66,14 +66,18 @@ class Tokenizer:
                                 new_subtokens.append(subtokens[a])
                                 a += 1
 
+                        # Find range of tokens (beginning and end)
                         b = a
                         while b < len(subtokens) and subtokens[b] != "NOT" and subtokens[b] != "OR":
                             b += 1
                         connected = []
+
+                        # Normalize all tokens in range
                         for j in range(a, b):
                             subtokens[j] = subtokens[j].lower()
                             subtokens[j] = re.sub(r'\s', '', subtokens[j])
                             connected.append(subtokens[j])
+
                         new_subtokens.append(connected)
                         a = b
                     subtokens = new_subtokens

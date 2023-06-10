@@ -40,6 +40,8 @@ class QueryProcessor:
         # tokenize the query and get array of operands
         query_tokens = self.tokenizer.tokenizeQuery(query_number)
         queries = self.spelling_controller.check_query(query_tokens)
+
+        # if there are terms to correct, do so
         if len(queries) > 1:
             print("Welche Anfrage möchten Sie ausführen?")
             query_number = -1
@@ -50,7 +52,6 @@ class QueryProcessor:
             query_tokens = queries[query_number - 1]
         else:
             query_tokens = queries[0]
-
 
         index_lists = {}
         # resolve the proximity and phrase queries

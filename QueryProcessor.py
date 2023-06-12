@@ -70,6 +70,7 @@ class QueryProcessor:
             query_tokens = queries[0]
 
         index_lists = {}
+
         # resolve the proximity and phrase queries
         for query_part in query_tokens:
             for i in range(len(query_part)):
@@ -141,25 +142,28 @@ class QueryProcessor:
                 query_tokens[i].pop(or_not_pos + 1)
                 query_tokens[i].pop(or_not_pos - 1)
 
+            # Resolve the remaining level 3 term => create an ID out of it
             if type(query_part[0]) is list:
                 result = self.index.get_document_list(query_part[0][0])
                 result_id = "#&" + str(random.random())
                 index_lists[result_id] = result
                 query_tokens[i][0] = result_id
 
+            # Check if there is an operand right from the AND_NOT, if so create an ID out of it
             if query_part[0] == "AND_NOT" and type(query_part[1]) is list:
                 result = self.index.get_document_list(query_part[1][0])
                 result_id = "#&" + str(random.random())
                 index_lists[result_id] = result
                 query_tokens[i][1] = result_id
 
-        # Sort the remaining index_lists references in the query_tokens by their index list size
+        # Sort the remaining index_lists references in the query_tokens by their index list size (posting list size)
         sorted_query = []
         copied_query_tokens = copy.deepcopy(query_tokens)
         while len(copied_query_tokens) > 0:
             shortest = sys.maxsize
             shortest_index = 0
             for i in range(len(copied_query_tokens)):
+                # If there is an AND_NOT
                 if len(copied_query_tokens[i]) == 2:
                     list_size = self.document_count - len(index_lists[copied_query_tokens[i][1]])
                 else:
@@ -176,17 +180,22 @@ class QueryProcessor:
                 result = self.merger.and_not_merge(
                     self.merger.not_merge(index_lists[sorted_query[0][1]], self.document_count),
                     index_lists[sorted_query[1][1]])
+            # Case: AND_NOT + ID in first list (invert input into and_not_merge)
             elif "AND_NOT" in sorted_query[0]:
                 result = self.merger.and_not_merge(index_lists[sorted_query[1][0]], index_lists[sorted_query[0][1]])
+            # Case: AND_NOT + ID in second list (input can stay the same)
             elif "AND_NOT" in sorted_query[1]:
                 result = self.merger.and_not_merge(index_lists[sorted_query[0][0]], index_lists[sorted_query[1][1]])
             else:
                 result = self.merger.and_merge(index_lists[sorted_query[0][0]], index_lists[sorted_query[1][0]])
+
+            # Resolve implicit ANDs to combine two IDs (Postinglists) into one
             result_id = "#&" + str(random.random())
             index_lists[result_id] = result
             sorted_query[0] = [result_id]
             sorted_query.pop(1)
 
+        # If there is still an AND_NOT left => weird edge case => f.E. for: NOT a
         if len(sorted_query[0]) != 1:
             return self.merger.not_merge(index_lists[sorted_query[0][1]], self.document_count)
 

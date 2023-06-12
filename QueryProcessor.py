@@ -15,6 +15,23 @@ class QueryProcessor:
         self.document_count = document_count
         self.spelling_controller = SpellingController(index)
 
+    def check_input(self, queries):
+        sys.stdout.write('\nGeben Sie bitte eine der vorgeschlagenen Zahlen ein: ')
+        sys.stdout.flush()
+        user_input = input()
+
+        if user_input is not None:
+            try:
+                user_input_int = int(user_input)
+                if 0 < user_input_int < len(queries) + 1:
+                    return user_input_int
+                else:
+                    print("Die Eingabe entspricht nicht dem Wertebereich!")
+            except ValueError:
+                print("Die Eingabe ist keine Ganzzahl!")
+
+        return self.check_input(queries)
+
     # Verarbeitet eine boolesche Anfrage in Normalform und gibt die entsprechenden Suchergebnisse zurück
     # (NOT "term1 term2" OR NOT term3 \4 term5) AND NOT term4 \3 term5 AND "term1 term3 term4" AND term4
     # (NOT the OR NOT an \20 the OR a b c OR d) AND NOT read write AND (the OR a) AND NOT the
@@ -44,13 +61,11 @@ class QueryProcessor:
 
         # if there are terms to correct, do so
         if len(queries) > 1:
-            print("Welche Anfrage möchten Sie ausführen?")
-            query_number = -1
-            while int(query_number) < 1 or int(query_number) > len(queries):
-                sys.stdout.write('Bitte eine der Zahlen eingeben:')
-                sys.stdout.flush()
-                query_number = int(input())
-            query_tokens = queries[query_number - 1]
+            # check recursively for correct user input
+            print("\nWelche Anfrage möchten Sie ausführen?")
+            user_input = self.check_input(queries)
+            query_tokens = queries[int(user_input) - 1]
+
         else:
             query_tokens = queries[0]
 

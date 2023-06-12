@@ -16,13 +16,16 @@ class SpellingController:
                 if type(operand) is list:
                     for term_number in range(len(operand)):
                         term = operand[term_number]
+
                         # If the term is not known, and it is not of the format \\x
                         if len(self.positionalIndex.get_document_list(term)) < r_index and not re.match(r'\\[0-9]+', term):
+
                             # Split the query term into K-Grams and get the posting list for each K-Gram
                             amount_of_k_grams = len(self.positionalIndex.k_gram_index.split_to_k_grams(term))
                             k_gram_posting_lists = self.positionalIndex.k_gram_index.get_posting_lists(term)
                             k_gram_dictionary = {}
                             results = []
+
                             # Combine the posting lists to one dictionary where the key is a term and the value
                             # describes how often the term appeared in the posting lists
                             for posting_list in k_gram_posting_lists:
@@ -31,6 +34,7 @@ class SpellingController:
                                         k_gram_dictionary[posting] = 1
                                     else:
                                         k_gram_dictionary[posting] += 1
+
                             # Calculate the jaccard coefficient for each term in the dictionary
                             # and move it into results if the jaccard coefficient is greater than the jaccard_threshold
                             for k_term, value in k_gram_dictionary.items():

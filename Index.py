@@ -12,8 +12,8 @@ class TermDocumentIndex:
 
 # Class to safe a token, the Documents it is in and the document frequency
 class Index:
-    def __init__(self, token, k_gram_size, first_document, first_position):
-        self.token = token
+    def __init__(self, term, k_gram_size, first_document, first_position):
+        self.term = term
         self.k_gram_size = k_gram_size
         self.document_frequency = 1
         self.documents = {first_document: TermDocumentIndex(first_position)}

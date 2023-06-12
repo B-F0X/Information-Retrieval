@@ -75,13 +75,17 @@ class Tokenizer:
                         # Normalize all tokens in range
                         for j in range(a, b):
                             subtokens[j] = subtokens[j].lower()
-                            subtokens[j] = re.sub(r'\s', '', subtokens[j])
+                            subtokens[j] = re.sub(r'[^\w\s\']|_', '', subtokens[j])
+                            subtokens[j] = re.sub(r"\s'|'\s", ' ', subtokens[j])
                             connected.append(subtokens[j])
 
                         new_subtokens.append(connected)
                         a = b
                     subtokens = new_subtokens
             else:
+                subtokens[0] = subtokens[0].lower()
+                subtokens[0] = re.sub(r'[^\w\s\']|_', '', subtokens[0])
+                subtokens[0] = re.sub(r"\s'|'\s", ' ', subtokens[0])
                 subtokens = [subtokens]
             tokens[i] = subtokens
         return tokens

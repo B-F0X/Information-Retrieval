@@ -15,12 +15,6 @@ class Tokenizer:
         text = re.sub(r"\s'|'\s", ' ', text)
         return text.split()
 
-    def normalize_term(self, term):
-        term = term.lower()
-        term = re.sub(r'[^\w\s\']|_', '', term)
-        return re.sub(r"\s'|'\s", ' ', term)
-
-
     # (information OR data) AND analysis AND NOT retrieval AND Information \10 retrieval AND "library of congress"
     def tokenizeQuery(self, text):
         """
@@ -80,13 +74,19 @@ class Tokenizer:
 
                         # Normalize all tokens in range
                         for j in range(a, b):
-                            connected.append(self.normalize_term(subtokens[j]))
+                            subtokens[j] = subtokens[j].lower()
+                            subtokens[j] = re.sub(r'[^\w\s\']|_', '', subtokens[j])
+                            subtokens[j] = re.sub(r"\s'|'\s", ' ', subtokens[j])
+                            connected.append(subtokens[j])
 
                         new_subtokens.append(connected)
                         a = b
                     subtokens = new_subtokens
             else:
-                subtokens = [self.normalize_term(subtokens[0])]
+                subtokens[0] = subtokens[0].lower()
+                subtokens[0] = re.sub(r'[^\w\s\']|_', '', subtokens[0])
+                subtokens[0] = re.sub(r"\s'|'\s", ' ', subtokens[0])
+                subtokens = [subtokens]
             tokens[i] = subtokens
         return tokens
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def precision(y_true, y_pred):
     """
         Calculates precision score for a list of relevant documents and the groundtruth.
@@ -17,7 +18,18 @@ def precision(y_true, y_pred):
         Score: float
             Precision = TP / (TP + FP)
     """
-    pass
+
+    y_true_set = set(y_true)
+    y_pred_set = set(y_pred)
+
+    tp = y_pred_set.intersection(y_true_set)
+    fp = y_pred_set.difference(y_true_set)
+
+    try:
+        return len(tp) / (len(tp) + len(fp))
+    except ZeroDivisionError:
+        return 0.0
+
 
 def recall(y_true, y_pred):
     """
@@ -35,7 +47,18 @@ def recall(y_true, y_pred):
         Score: float
             Recall = TP / (TP + FN)
     """
-    pass
+
+    y_true_set = set(y_true)
+    y_pred_set = set(y_pred)
+
+    tp = y_pred_set.intersection(y_true_set)
+    fn = y_true_set.difference(y_pred_set)
+
+    try:
+        return len(tp) / (len(tp) + len(fn))
+    except ZeroDivisionError:
+        return 0.0
+
 
 def fscore(y_true, y_pred, beta=1.0):
     """
@@ -55,7 +78,16 @@ def fscore(y_true, y_pred, beta=1.0):
         Score: float
             F-Measure = (1 + beta^2) \cdot \frac{Precision \cdot Recall}{beta^2 \cdot Precision+Recal}
     """
-    pass
+
+    calculated_precision = precision(y_true, y_pred)
+    calculated_recall = recall(y_true, y_pred)
+
+    try:
+        return (1 + beta ** 2) * ((calculated_precision * calculated_recall) /
+                                  ((beta ** 2 * calculated_precision) + calculated_recall))
+    except ZeroDivisionError:
+        return 0.0
+
 
 def precision_recall_fscore(y_true, y_pred, beta=1.0):
     """
@@ -75,7 +107,8 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0):
         Score: tuple
             (precision, recall, f-measure)
     """
-    pass
+
+    return precision(y_true, y_pred), recall(y_true, y_pred), fscore(y_true, y_pred, beta)
 
             
 class RetrievalScorer:

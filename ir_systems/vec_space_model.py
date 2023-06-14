@@ -2,7 +2,9 @@ from retrieval import InitRetrievalSystem  # Abstract class
 from tokenizer import *
 from termIndex import *
 from postinglist import *
+from config import *
 import time
+import numpy as np
 
 
 class VectorSpaceModel(InitRetrievalSystem):
@@ -96,6 +98,11 @@ class VectorSpaceModel(InitRetrievalSystem):
     def retrieve_k(self, query, k):
         return 0
 
-    # TODO: Implement
-    # def fast_cosine_alg(self):
-    # ...
+    def fast_cosine_alg(self, posting_list_obj, doc_id, query_freq):
+        term_doc_freq = len(posting_list_obj.positions[doc_id])
+        len_doc = self.doc_id_length_mapping[doc_id]
+        number_of_docs = len(self.doc_id_length_mapping)
+        d_f_t = posting_list_obj.occurrence
+        score = query_freq * (term_doc_freq / (term_doc_freq + (config_k * (len_doc / self.average_doc_len)))
+                              * np.log((number_of_docs / d_f_t)))
+        return 0

@@ -86,9 +86,11 @@ class VectorSpaceModel(InitRetrievalSystem):
             print(f"Zeit für Einlesen und Indexierung: {elapsed_time_indexing:.2f} ms")
             print(f"Zeit fürs Sortieren der Postinglisten: {elapsed_time_sorting:.2f} ms\n")
 
-    # TODO: Implement
-    # def calc_avg_doc_length(self):
-    # ...
+    def calc_avg_doc_length(self):
+        average_length = 0
+        for doc_id, doc_length in self.doc_id_length_mapping.items():
+            average_length += doc_length
+        self.average_doc_len = average_length / len(self.doc_id_length_mapping.items())
 
     # TODO: Implement for real
     def retrieve(self, query):

@@ -110,7 +110,7 @@ def precision_recall_fscore(y_true, y_pred, beta=1.0):
 
     return precision(y_true, y_pred), recall(y_true, y_pred), fscore(y_true, y_pred, beta)
 
-            
+
 class RetrievalScorer:
     """
     Retrieval score system. 
@@ -139,6 +139,7 @@ class RetrievalScorer:
         system : class object
             A retrieval system that implements InitRetrievalSystem.
         """
+
         self.retrieval_system = system
     
     def rPrecision(self, y_true, query):
@@ -158,7 +159,17 @@ class RetrievalScorer:
         Score: float
             R-precision = TP / (TP + FN)
         """
-        pass
+
+        result = self.retrieval_system.retrieve_k(query, len(y_true))
+        y_pred_set = set([res[0] for res in result])
+        y_true_set = set(y_true)
+
+        tp = y_pred_set.intersection(y_true_set)
+
+        try:
+            return len(tp) / len(y_true_set)
+        except ZeroDivisionError:
+            return 0.0
 
     def elevenPointAP(self, query, y_true):
         """

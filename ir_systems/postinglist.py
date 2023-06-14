@@ -29,5 +29,5 @@ class Postinglist:
             self.postinglist.append(docid)
             self.seen_docids.add(docid)
 
-    def get_sorted_postinglist(self) -> None:
+    def sort_postinglist(self) -> None:
         self.postinglist = sorted(self.postinglist)

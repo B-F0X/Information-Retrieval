@@ -1,9 +1,21 @@
 import sys
-from tokenizer import *
+from vec_space_model import *
 from config import *
+from utility import *
+
 
 def main():
-    # TODO: Create the vector space model
+    # Create the vector space model
+    vec_space_model = VectorSpaceModel()
+
+    # Open and read the cisi file
+    vec_space_model.open_and_read(collection_file)
+
+    # Print the first 5 results of all the dictionaries
+    utility = Utility()
+    utility.print_dictionary("Dictionary", vec_space_model.dictionary)
+    utility.print_dictionary("term_index_mapping", vec_space_model.term_index_mapping)
+    utility.print_dictionary("doc_id_length_mapping", vec_space_model.doc_id_length_mapping)
 
     # TODO: Evaluate the vector space model
 

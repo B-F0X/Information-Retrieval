@@ -81,6 +81,8 @@ class VectorSpaceModel(InitRetrievalSystem):
 
             elapsed_time_sorting = (time.perf_counter() - start_time) * 1e3
 
+            self.calc_avg_doc_length()
+
             # Print some file statistics
             print("\nEinlesen und Indexierung beendet.")
             print(f"Zeit für Einlesen und Indexierung: {elapsed_time_indexing:.2f} ms")
@@ -92,13 +94,13 @@ class VectorSpaceModel(InitRetrievalSystem):
             average_length += doc_length
         self.average_doc_len = average_length / len(self.doc_id_length_mapping.items())
 
-    # TODO: Implement for real
+    # TODO: Implement for real (I do not think we need it)
     def retrieve(self, query):
         return 0
 
-    # TODO: Implement for real
     def retrieve_k(self, query, k):
-        return 0
+        query_terms = self.tokenizer.tokenize(query)
+        return self.fast_cosine_scores(query_terms, k)
 
     def fast_cosine_alg(self, posting_list_obj, doc_id, query_freq):
         term_doc_freq = len(posting_list_obj.positions[doc_id])
@@ -108,3 +110,41 @@ class VectorSpaceModel(InitRetrievalSystem):
         score = query_freq * (term_doc_freq / (term_doc_freq + (config_k * (len_doc / self.average_doc_len)))
                               * np.log((number_of_docs / d_f_t)))
         return 0
+
+    def fast_cosine_scores(self, query_terms, k):
+        number_of_documents = len(self.doc_id_length_mapping.keys())
+        scores = {}
+        # for each query term t
+        for query_term in query_terms:
+            # do fetch posting list for t
+            try:
+                query_term_posting_list = self.dictionary[self.term_index_mapping[query_term]]
+            except KeyError:
+                print("Term {} is not known. It will be ignored in the query.".format(query_term))
+                continue
+            document_frequency = query_term_posting_list.get_document_frequency()
+            # for each pair(d, tf(t,d)) in postinglist
+            for doc_id in query_term_posting_list.get_postinglist():
+                term_frequency = len(query_term_posting_list.get_positions_in_document(doc_id))
+                # do Scored[d] += w(t,d)
+                try:
+                    scores[doc_id] += self.calculate_weight_of_term_in_document(
+                        doc_id, term_frequency, number_of_documents, document_frequency, k)
+                except KeyError:
+                    scores[doc_id] = self.calculate_weight_of_term_in_document(
+                        doc_id, term_frequency, number_of_documents, document_frequency, k)
+        # for each d
+        for doc_id in scores.keys():
+            # do Scored[d] = Scored[d] / Length[d]
+            scores[doc_id] = scores[doc_id] / self.doc_id_length_mapping[doc_id]
+        sorted_scores = dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))
+        # return components of Scores[]
+        return list(sorted_scores.keys())
+
+    def calculate_weight_of_term_in_document(self, doc_id, term_frequency, number_of_documents, document_frequency, k):
+        return term_frequency / \
+               (term_frequency + k * (self.doc_id_length_mapping[doc_id] /
+                                      self.average_doc_len)) * np.log(number_of_documents/document_frequency)
+
+
+

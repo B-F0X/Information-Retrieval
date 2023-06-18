@@ -18,7 +18,6 @@ class Postinglist:
     def append(self, docid: int, position: int) -> None:
         try:
             self.positions[docid].append(position)
-            self.occurrence += 1
         except KeyError:
             self.positions[docid] = [position]
             self.occurrence += 1
@@ -31,3 +30,12 @@ class Postinglist:
 
     def sort_postinglist(self) -> None:
         self.postinglist = sorted(self.postinglist)
+
+    def get_postinglist(self):
+        return self.postinglist
+
+    def get_positions_in_document(self, doc_id):
+        return self.positions[doc_id]
+
+    def get_document_frequency(self):
+        return self.occurrence

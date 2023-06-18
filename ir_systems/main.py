@@ -29,16 +29,16 @@ def main():
         sys.stdout.flush()
         k = input()
 
-        if query or k in ("#quit", "#q", "#exit", "#e", "#close", "#c"):
+        if query in ("#quit", "#q", "#exit", "#e", "#close", "#c") \
+                or k in ("#quit", "#q", "#exit", "#e", "#close", "#c"):
             raise SystemExit
 
-        # start_time = time.perf_counter()
-        # TODO: Retrieve_k for given query and given K
-        # elapsed_time = (time.perf_counter() - start_time) * 1e3
+        start_time = time.perf_counter()
+        results = vec_space_model.retrieve_k(query, int(k))
+        elapsed_time = (time.perf_counter() - start_time) * 1e3
 
-        # TODO: Print results and elapsed time
-        # print(results)
-        # print(f"Zeit zur Abarbeitung der Anfrage: {elapsed_time:.2f} ms\n")
+        print(results)
+        print(f"Zeit zur Abarbeitung der Anfrage: {elapsed_time:.2f} ms\n")
 
 
 if __name__ == '__main__':

@@ -18,6 +18,10 @@ def main():
     utility.print_dictionary("doc_id_length_mapping", vec_space_model.doc_id_length_mapping)
 
     # TODO: Evaluate the vector space model
+    test_abfragen = [...]  #Ersetzen durch Testabfragen
+    erwartete_ergebnisse = [...]  #Ersetzen durch erwarteten Ergebnisse
+    bewertungsergebnisse = vec_space_model.evaluate(test_abfragen, erwartete_ergebnisse)
+    print(bewertungsergebnisse)
 
     # TODO: Query the vector space model
     while True:

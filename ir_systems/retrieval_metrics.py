@@ -174,7 +174,7 @@ class RetrievalScorer:
     def elevenPointAP(self, query, y_true):
         """
         Calculate the 11-point average precision score.
-        
+
         Parameters
         ----------
         y_true : list
@@ -187,12 +187,41 @@ class RetrievalScorer:
         Tuple: (float, list, list)
             (11-point average precision score, recall levels, precision levels).
         """
-        pass
+        #Abrufen Ergebnisse fuer Abfrage
+        results = self.retrieve_k(query, len(y_true))
+
+        #Initialisierung von Variablen fuer Berechnung der 11point..
+        relevant_results = 0
+        precision_levels = []
+        recall_levels = np.linspace(0.0, 1.0, 11)  #Festgelegte recalllvl Parameter
+        
+        #Durchlaufen Ergebnisse
+        for i, result in enumerate(results, start=1):
+            #Ergebnis in  y_true-Liste ist dann ist es relevant
+            if result in y_true:
+                relevant_results += 1
+                
+            precision = relevant_results / i
+            recall = relevant_results / len(y_true)
+            
+            #Wenn aktuelle Abruf gleich oder groesser als das naechste recall lvl ist speichert man die precision
+            if recall >= recall_levels[len(precision_levels)]:
+                precision_levels.append(precision)
+
+        #Wenn nicht alle relevant realls erreicht, fuellt man restliche preciscion levels mit 0 auf
+        while len(precision_levels) < 11:
+            precision_levels.append(0.0)
+
+        #Berechnung der 11point...
+        average_precision = sum(precision_levels) / 11
+
+        return average_precision, list(recall_levels), precision_levels
+
 
     def MAP(self, queries, groundtruths):
         """
         Calculate the mean average precision.
-        
+
         Parameters
         ----------
         groundtruths : list(list)
@@ -205,4 +234,29 @@ class RetrievalScorer:
         Score: float
             MAP = frac{1}{|Q|} \cdot \sum_{q \in Q} AP(q).
         """
-        pass
+        #Liste zur Speicherung der avg precisions fuer jede Abfrage
+        average_precisions = []
+        
+        #Durchlaufen der Abfragen und dazugehoerige groundtruths
+        for query, groundtruth in zip(queries, groundtruths):
+            #Abrufen der Ergebnisse 
+            results = self.retrieve_k(query, len(groundtruth))
+            
+            #Initialisierung von Var fuer Berechnung der avg precision
+            relevant_results = 0
+            cumulative_precision = 0
+            
+            #Durchlaufen der Ergebnisse
+            for i, result in enumerate(results, start=1):
+                #Ergbeniss ist relevant wenn in groundtruth Liste ist
+                if result in groundtruth:
+                    relevant_results += 1
+                    cumulative_precision += relevant_results / i
+                    
+            #Berechnung avg precisions fuer Abfrage
+            average_precision = cumulative_precision / len(groundtruth) if groundtruth else 0
+            average_precisions.append(average_precision)
+        
+        #Berechnung&Rueckgabe der Mean Average Precision
+        return sum(average_precisions) / len(average_precisions)
+

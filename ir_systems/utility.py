@@ -74,7 +74,15 @@ class Utility:
 
     def calculate_and_print_precision_recall_curve(self, curve_query_ids):
         for curve_query_id in curve_query_ids:
-            self.retrival_scorer.elevenPointAP(self.evaluation_index.queries[curve_query_id],
+            self.retrival_scorer.eleven_point_precision_recall_curve(self.evaluation_index.queries[curve_query_id],
                                           self.evaluation_index.relevant_documents[curve_query_id])
 
-
+    def calculate_and_print_eleven_point_average_precision(self):
+        print("\nEleven point average precision:")
+        categories = []
+        values = []
+        for key in self.evaluation_index.queries.keys():
+            relevant_documents = self.evaluation_index.relevant_documents[key]
+            categories.append(str(key))
+            values.append(str(self.retrival_scorer.elevenPointAP(self.evaluation_index.queries[key], relevant_documents)[0]))
+        print(tabulate([values], categories, tablefmt='fancy_grid'))

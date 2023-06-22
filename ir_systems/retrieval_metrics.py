@@ -190,7 +190,7 @@ class RetrievalScorer:
             (11-point average precision score, recall levels, precision levels).
         """
         #Abrufen Ergebnisse fuer Abfrage
-        results = self.retrieve_k(query, len(y_true))
+        results = self.retrieval_system.retrieve_k(query, len(y_true))
 
         #Initialisierung von Variablen fuer Berechnung der 11point..
         relevant_results = 0
@@ -219,13 +219,16 @@ class RetrievalScorer:
 
         return average_precision, list(recall_levels), precision_levels
 
-    def eleven_point_precision_recall_curve(self):
+    def eleven_point_precision_recall_curve(self, query, y_true):
+        # result = self.elevenPointAP(query, y_true)
+        # plt.plot(result[1], result[2], marker='o')
         result = self.retrieval_system.retrieve_k(query, len(y_true))
         number_of_points = len(result) if len(result) <= 12 else 12
         recall_array = [recall(y_true, result[:i]) for i in range(1, number_of_points)]
         precision_array = [precision(y_true, result[:i]) for i in range(1, number_of_points)]
 
         plt.plot(recall_array, precision_array, marker='o')
+
         plt.xlabel('Recall')
         plt.ylabel('Precision')
         plt.title('Precision-Recall-Curve')

@@ -31,6 +31,8 @@ def main():
 
     utility.calculate_and_print_r_precision()
 
+    utility.calculate_and_print_eleven_point_average_precision()
+
     utility.calculate_and_print_precision_recall_fscore_at_k([5, 10, 20, 50])
 
     utility.calculate_and_print_precision_recall_curve([11, 14, 19, 20])

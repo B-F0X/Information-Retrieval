@@ -176,7 +176,7 @@ class RetrievalScorer:
     def elevenPointAP(self, query, y_true):
         """
         Calculate the 11-point average precision score.
-        
+
         Parameters
         ----------
         y_true : list
@@ -189,6 +189,37 @@ class RetrievalScorer:
         Tuple: (float, list, list)
             (11-point average precision score, recall levels, precision levels).
         """
+        #Abrufen Ergebnisse fuer Abfrage
+        results = self.retrieve_k(query, len(y_true))
+
+        #Initialisierung von Variablen fuer Berechnung der 11point..
+        relevant_results = 0
+        precision_levels = []
+        recall_levels = np.linspace(0.0, 1.0, 11)  #Festgelegte recalllvl Parameter
+
+        #Durchlaufen Ergebnisse
+        for i, result in enumerate(results, start=1):
+            #Ergebnis in  y_true-Liste ist dann ist es relevant
+            if result in y_true:
+                relevant_results += 1
+
+            precision = relevant_results / i
+            recall = relevant_results / len(y_true)
+
+            #Wenn aktuelle Abruf gleich oder groesser als das naechste recall lvl ist speichert man die precision
+            if recall >= recall_levels[len(precision_levels)]:
+                precision_levels.append(precision)
+
+        #Wenn nicht alle relevant realls erreicht, fuellt man restliche preciscion levels mit 0 auf
+        while len(precision_levels) < 11:
+            precision_levels.append(0.0)
+
+        #Berechnung der 11point...
+        average_precision = sum(precision_levels) / 11
+
+        return average_precision, list(recall_levels), precision_levels
+
+    def eleven_point_precision_recall_curve(self):
         result = self.retrieval_system.retrieve_k(query, len(y_true))
         number_of_points = len(result) if len(result) <= 12 else 12
         recall_array = [recall(y_true, result[:i]) for i in range(1, number_of_points)]
@@ -204,7 +235,7 @@ class RetrievalScorer:
     def MAP(self, queries, groundtruths):
         """
         Calculate the mean average precision.
-        
+
         Parameters
         ----------
         groundtruths : list(list)

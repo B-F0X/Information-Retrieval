@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from config import *
 
 
 def precision(y_true, y_pred):
@@ -161,7 +163,7 @@ class RetrievalScorer:
         """
 
         result = self.retrieval_system.retrieve_k(query, len(y_true))
-        y_pred_set = set([res[0] for res in result])
+        y_pred_set = set(result)
         y_true_set = set(y_true)
 
         tp = y_pred_set.intersection(y_true_set)
@@ -187,7 +189,17 @@ class RetrievalScorer:
         Tuple: (float, list, list)
             (11-point average precision score, recall levels, precision levels).
         """
-        pass
+        result = self.retrieval_system.retrieve_k(query, len(y_true))
+        number_of_points = len(result) if len(result) <= 12 else 12
+        recall_array = [recall(y_true, result[:i]) for i in range(1, number_of_points)]
+        precision_array = [precision(y_true, result[:i]) for i in range(1, number_of_points)]
+
+        plt.plot(recall_array, precision_array, marker='o')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.title('Precision-Recall-Curve')
+
+        plt.show()
 
     def MAP(self, queries, groundtruths):
         """
@@ -205,4 +217,30 @@ class RetrievalScorer:
         Score: float
             MAP = frac{1}{|Q|} \cdot \sum_{q \in Q} AP(q).
         """
-        pass
+        map = 0
+        for query_number in range(len(queries)):
+            query = queries[query_number]
+            result = self.retrieval_system.retrieve(query)
+            summ = 0
+            number_of_relevant_documents = 0
+            for i in range(len(result)):
+                if result[i] in groundtruths[query_number]:
+                    summ += precision(groundtruths[query_number], result[:i])
+                    number_of_relevant_documents += 1
+            try:
+                map += summ / number_of_relevant_documents
+            except ZeroDivisionError:
+                map += 0
+        return map / len(queries)
+
+    def precision_at_k(self, query, y_true, k):
+        result = self.retrieval_system.retrieve_k(query, config_k)
+        return precision(y_true, result[:k])
+
+    def recall_at_k(self, query, y_true, k):
+        result = self.retrieval_system.retrieve_k(query, config_k)
+        return recall(y_true, result[:k])
+
+    def fscore_at_k(self, query, y_true, k):
+        result = self.retrieval_system.retrieve_k(query, config_k)
+        return fscore(y_true, result[:k])

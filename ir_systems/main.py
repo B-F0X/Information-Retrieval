@@ -1,7 +1,5 @@
 import sys
-
 import matplotlib.pyplot as plt
-
 from vec_space_model import *
 from config import *
 from utility import *
@@ -18,8 +16,6 @@ def main():
 
     # Open and read the cisi file
     vec_space_model.open_and_read(collection_file)
-
-
 
     # Print the first 5 results of all the dictionaries
     utility = Utility(vec_space_model, retrival_scorer, evaluation_index)
@@ -56,7 +52,6 @@ def main():
 
         print(results)
         print(f"Zeit zur Abarbeitung der Anfrage: {elapsed_time:.2f} ms\n")
-
 
 if __name__ == '__main__':
     main()

@@ -138,6 +138,3 @@ class VectorSpaceModel(InitRetrievalSystem):
         return term_frequency / \
                (term_frequency + k * (self.doc_id_length_mapping[doc_id] /
                                       self.average_doc_len)) * np.log(number_of_documents/document_frequency)
-
-
-

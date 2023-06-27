@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from retrieval_metrics import *
+
+
 class Utility:
 
     def __init__(self, vec_space_model, retrival_scorer, evaluation_index):

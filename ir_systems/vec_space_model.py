@@ -1,3 +1,5 @@
+import math
+
 from retrieval import InitRetrievalSystem  # Abstract class
 from tokenizer import *
 from termIndex import *
@@ -13,6 +15,7 @@ class VectorSpaceModel(InitRetrievalSystem):
         self.term_index_mapping = {}
         self.doc_id_length_mapping = {}
         self.average_doc_len = 0.0
+        self.document_vector_length = {}
 
         self.tokenizer = Tokenizer()
 
@@ -82,6 +85,7 @@ class VectorSpaceModel(InitRetrievalSystem):
             elapsed_time_sorting = (time.perf_counter() - start_time) * 1e3
 
             self.calc_avg_doc_length()
+            self.calc_document_vector_length()
 
             # Print some file statistics
             print("\nEinlesen und Indexierung beendet.")
@@ -93,6 +97,21 @@ class VectorSpaceModel(InitRetrievalSystem):
         for doc_id, doc_length in self.doc_id_length_mapping.items():
             average_length += doc_length
         self.average_doc_len = average_length / len(self.doc_id_length_mapping.items())
+
+    def calc_document_vector_length(self):
+        number_of_documents = len(self.doc_id_length_mapping.keys())
+        for doc_id, doc_length in self.doc_id_length_mapping.items():
+            sum_wtd = 0
+            for term in self.term_index_mapping.keys():
+                query_term_posting_list = self.dictionary[self.term_index_mapping[term]]
+                try:
+                    term_frequency = len(query_term_posting_list.get_positions_in_document(doc_id))
+                except KeyError:
+                    term_frequency = 0
+                document_frequency = query_term_posting_list.get_document_frequency()
+                wtd = self.calculate_weight_of_term_in_document(doc_id, term_frequency, number_of_documents, document_frequency, config_k)
+                sum_wtd += wtd * wtd
+            self.document_vector_length[doc_id] = math.sqrt(sum_wtd)
 
     def retrieve(self, query):
         query_terms = self.tokenizer.tokenize(query)
@@ -129,7 +148,7 @@ class VectorSpaceModel(InitRetrievalSystem):
         # for each d
         for doc_id in scores.keys():
             # do Scored[d] = Scored[d] / Length[d]
-            scores[doc_id] = scores[doc_id] / self.doc_id_length_mapping[doc_id]
+            scores[doc_id] = scores[doc_id] / self.document_vector_length[doc_id]
         sorted_scores = dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))
         # return components of Scores[]
         return list(sorted_scores.keys())[:k]

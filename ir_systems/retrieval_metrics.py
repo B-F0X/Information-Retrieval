@@ -222,10 +222,9 @@ class RetrievalScorer:
     def eleven_point_precision_recall_curve(self, query, y_true):
         # result = self.elevenPointAP(query, y_true)
         # plt.plot(result[1], result[2], marker='o')
-        result = self.retrieval_system.retrieve_k(query, len(y_true))
-        number_of_points = len(result) if len(result) <= 12 else 12
-        recall_array = [recall(y_true, result[:i]) for i in range(1, number_of_points)]
-        precision_array = [precision(y_true, result[:i]) for i in range(1, number_of_points)]
+        result = self.retrieval_system.retrieve_k(query, 11)
+        recall_array = [recall(y_true, result[:i]) for i in range(1, 11)]
+        precision_array = [precision(y_true, result[:i]) for i in range(1, 11)]
 
         plt.plot(recall_array, precision_array, marker='o')
 

@@ -1,5 +1,6 @@
 from config import *
 
+
 class EvaluationIndex:
     def __init__(self):
         self.queries = {}
